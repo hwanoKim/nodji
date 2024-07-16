@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from nodji.assets.asset_base import TickerAssetBase
+from ..assets.asset_base import TickerAssetBase
+from ..data.price_data import MinutePriceData
 
 
 @dataclass
@@ -18,3 +19,13 @@ class Coin(TickerAssetBase):
     eng_name: str
     warning: bool
     caution: CoinMarketCaution = CoinMarketCaution()
+
+    @property
+    def mprice(self):
+        return MinutePriceData(self)
+
+    def update_price(self):
+        pass
+
+    def imcoin(self):
+        pass

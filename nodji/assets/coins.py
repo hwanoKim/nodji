@@ -11,12 +11,13 @@ Coins <- CoinsDataConverter <- Coin
 """
 
 from nodji.assets.coin import Coin
-from .assets_base import TickerAssetsBase
+from .assets_base import TickerAssetsBase, AssetsBase
 from ..data.asset_data_converter import CoinDataConverter
 import nodji as nd
 
 
 class Coins(TickerAssetsBase[Coin]):
+
     def __init__(self):
         super().__init__()
         self._ub = nd.external_apis.Upbit()
@@ -25,10 +26,15 @@ class Coins(TickerAssetsBase[Coin]):
     def _conv(self):
         return CoinDataConverter()
 
-    def update(self):
+    def update_item(self):
         self._assets = self._conv.api_to_assets(self._ub.get_market_codes())
         df = self._conv.assets_to_dataframe(self._assets)
         self._db.save_dataframe('coins', df)
 
-    def _load_assets(self):
+    def update_price(self):
+        for coin in self:
+            coin.update_price()
+
+    def _load_asset_items(self):
         self._assets = self._conv.dataframe_to_assets(self._db.load_dataframe('coins'))
+

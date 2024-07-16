@@ -25,6 +25,7 @@ def set_log_level(level: LogLevel):
 set_log_level(LogLevel.WARNING)
 
 from .assets import Assets
-from .common import constants
+from .common import constants as consts
+from .common.paths import Paths
 from .common.file_utils import *
 from . import external_apis

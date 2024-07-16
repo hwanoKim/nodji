@@ -6,7 +6,7 @@ from typing import TypeVar, Sequence, Generic, get_type_hints
 T = TypeVar("T")
 
 
-class AssetsBase(Sequence, Generic[T]):
+class AssetsBase(Sequence[T]):
     """asset 시퀀스 클래스들의 부모 클래스이다."""
 
     def __init__(self):
@@ -18,7 +18,7 @@ class AssetsBase(Sequence, Generic[T]):
         """
         self._assets: list[T] = []
         self._db = Database()
-        self._load_assets()
+        self._load_asset_items()
 
     def __getitem__(self, item):
         asset_type = get_type_hints(self.__class__)['T'].__name__
@@ -49,16 +49,20 @@ class AssetsBase(Sequence, Generic[T]):
         """
         raise NotImplementedError(f"conv property must be implemented in {self.__class__.__name__}")
 
-    def update(self):
-        """어셋들의 리스트들을 업데이트 해준다."""
-        raise NotImplementedError(f"update method must be implemented in {self.__class__.__name__}")
+    def update_price(self):
+        """어셋의 가격정보를 업데이트 한다."""
+        raise NotImplementedError(f"update_price method must be implemented in {self.__class__.__name__}")
 
-    def _load_assets(self):
+    def update_item(self):
+        """어셋들의 종복 정보들을 업데이트 해준다."""
+        raise NotImplementedError(f"update_item method must be implemented in {self.__class__.__name__}")
+
+    def _load_asset_items(self):
         """어셋의 리스트들을 디비에서 읽어온다"""
         raise NotImplementedError(f"_load_assets method must be implemented in {self.__class__.__name__}")
 
 
-class TickerAssetsBase(AssetsBase[TickerAssetBase]):
+class TickerAssetsBase(AssetsBase[T]):
     """ticker asset 시퀀스 클래스들의 부모 클래스이다."""
 
     def __repr__(self):
