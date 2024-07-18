@@ -9,7 +9,8 @@ class Assets:
         self.coins = Coins()
 
     @property
-    def _all_assets(self):
+    def _all_asset_sequences(self):
+        """assets에 인스턴스 변수로 등록된 모든 asset 시퀀스들을 가져온다."""
         for assets in self.__dict__.values():
             if isinstance(assets, AssetsBase):
                 yield assets
@@ -21,10 +22,10 @@ class Assets:
 
     def update_item(self):
         """종류별로 각 종목들을 업데이트 한다."""
-        for assets in self._all_assets:
+        for assets in self._all_asset_sequences:
             assets.update_item()
 
     def update_price(self):
         """모든 종목들의 가격을 업데이트 한다."""
-        for assets in self._all_assets:
+        for assets in self._all_asset_sequences:
             assets.update_price()

@@ -7,19 +7,20 @@ from nodji.assets.coin import Coin, CoinMarketCaution
 T = TypeVar('T')
 
 
-class DataConverterBase:
-    def api_to_assets(self, data: list[dict]) -> list[T]:
+class AssetItemsConverterBase:
+    """asset의 item들을 변환하는 클래스의 부모 클래스이다."""
+    def api_to_asset_items(self, data: list[dict]) -> list[T]:
         raise NotImplementedError(f"{self.__class__.__name__}.api_to_assets")
 
-    def assets_to_dataframe(self, assets: list[T]) -> pd.DataFrame:
+    def asset_items_to_dataframe(self, assets: list[T]) -> pd.DataFrame:
         raise NotImplementedError(f"{self.__class__.__name__}.assets_to_dataframe")
 
-    def dataframe_to_assets(self, dataframe) -> list[T]:
+    def dataframe_to_asset_items(self, dataframe) -> list[T]:
         raise NotImplementedError(f"{self.__class__.__name__}.dataframe_to_assets")
 
 
-class CoinDataConverter(DataConverterBase):
-    def dataframe_to_assets(self, dataframe: pd.DataFrame) -> list['Coin']:
+class CoinItemsConverter(AssetItemsConverterBase):
+    def dataframe_to_asset_items(self, dataframe: pd.DataFrame) -> list['Coin']:
         if dataframe.empty:
             return []
         else:
@@ -36,10 +37,10 @@ class CoinDataConverter(DataConverterBase):
                 coins.append(coin)
             return coins
 
-    def assets_to_dataframe(self, assets: list[Coin]) -> pd.DataFrame:
+    def asset_items_to_dataframe(self, assets: list[Coin]) -> pd.DataFrame:
         return pd.DataFrame([asdict(asset) for asset in assets])
 
-    def api_to_assets(self, coins: list[dict]) -> list['Coin']:
+    def api_to_asset_items(self, coins: list[dict]) -> list['Coin']:
         return [Coin(ticker=coin['market'],
                      kor_name=coin['korean_name'],
                      eng_name=coin['english_name'],

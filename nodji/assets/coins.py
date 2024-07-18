@@ -11,30 +11,32 @@ Coins <- CoinsDataConverter <- Coin
 """
 
 from nodji.assets.coin import Coin
-from .assets_base import TickerAssetsBase, AssetsBase
-from ..data.asset_data_converter import CoinDataConverter
+from .assets_base import TickerAssetsBase
+from ..data.asset_items_converter import CoinItemsConverter
 import nodji as nd
 
 
-class Coins(TickerAssetsBase[Coin]):
+class Coins(TickerAssetsBase):
+    _assets: list[Coin]
 
     def __init__(self):
         super().__init__()
         self._ub = nd.external_apis.Upbit()
 
     @property
-    def _conv(self):
-        return CoinDataConverter()
+    def _name(self):
+        return 'coins'
+
+    @property
+    def _items_conv(self):
+        return CoinItemsConverter()
 
     def update_item(self):
-        self._assets = self._conv.api_to_assets(self._ub.get_market_codes())
-        df = self._conv.assets_to_dataframe(self._assets)
-        self._db.save_dataframe('coins', df)
+        """종목을 업데이트 한다.
 
-    def update_price(self):
-        for coin in self:
-            coin.update_price()
-
-    def _load_asset_items(self):
-        self._assets = self._conv.dataframe_to_assets(self._db.load_dataframe('coins'))
-
+        기존에 저장해둔 항목들을 읽어서 업데이트 하지 않는다.
+        항상 전체 리스트를 서버에서 받아온다.
+        """
+        self._assets = self._items_conv.api_to_asset_items(self._ub.get_market_codes())
+        df = self._items_conv.asset_items_to_dataframe(self._assets)
+        self._data.save(df)
