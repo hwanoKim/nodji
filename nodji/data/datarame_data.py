@@ -63,3 +63,12 @@ class DataFrameData(DataFrameDataBase):
     def save(self, dataframe: pd.DataFrame):
         dataframe.to_pickle(self.path)
         logger.info(f"{self.name}'s dataframe saved at {self.path}")
+
+
+class MonthlyDataFrameData(DataFrameDataBase):
+    """월별 데이터프레임
+
+    시계열 데이터가 길어질 경우 저장하고 읽어오는데 시간이 많이 소비된다.
+    그래서 월별로 나누어 시계열데이터를 저장할 수 있도록 하였다.
+    """
+
