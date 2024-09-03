@@ -1,22 +1,9 @@
 from dataclasses import asdict
-from typing import TypeVar
 
 import pandas as pd
+
 from nodji.assets.coin import Coin, CoinMarketCaution
-
-T = TypeVar('T')
-
-
-class AssetItemsConverterBase:
-    """asset의 item들을 변환하는 클래스의 부모 클래스이다."""
-    def api_to_asset_items(self, data: list[dict]) -> list[T]:
-        raise NotImplementedError(f"{self.__class__.__name__}.api_to_assets")
-
-    def asset_items_to_dataframe(self, assets: list[T]) -> pd.DataFrame:
-        raise NotImplementedError(f"{self.__class__.__name__}.assets_to_dataframe")
-
-    def dataframe_to_asset_items(self, dataframe) -> list[T]:
-        raise NotImplementedError(f"{self.__class__.__name__}.dataframe_to_assets")
+from nodji.data.converters.items_converters.items_converter_base import AssetItemsConverterBase
 
 
 class CoinItemsConverter(AssetItemsConverterBase):

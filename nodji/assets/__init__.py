@@ -8,6 +8,9 @@ class Assets:
     def __init__(self):
         self.coins = Coins()
 
+    def __repr__(self):
+        return f"coins: {self.coins}\n"
+
     @property
     def _all_asset_sequences(self):
         """assets에 인스턴스 변수로 등록된 모든 asset 시퀀스들을 가져온다."""

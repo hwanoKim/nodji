@@ -1,9 +1,22 @@
-from enum import Enum
+from enum import Enum, auto
+from zoneinfo import ZoneInfo
 
 
 class LogLevel(Enum):
-    DEBUG = 0
-    INFO = 1
-    WARNING = 2
-    ERROR = 3
-    CRITICAL = 4
+    DEBUG = auto()
+    INFO = auto()
+    WARNING = auto()
+    ERROR = auto()
+    CRITICAL = auto()
+
+
+class DataStorageFrequency(Enum):
+    DAILY = auto()
+    WEEKLY = auto()
+    MONTHLY = auto()
+    ANNUALLY = auto()
+
+
+class TimeZone(Enum):
+    SEOUL = ZoneInfo("Asia/Seoul")
+    UTC = ZoneInfo("UTC")

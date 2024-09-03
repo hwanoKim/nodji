@@ -11,7 +11,7 @@ def exists_path(path):
 
 
 def make_directory(path):
-    if exists_directory(path):
+    if not exists_directory(path):
         Path(path).mkdir(parents=True)
 
 

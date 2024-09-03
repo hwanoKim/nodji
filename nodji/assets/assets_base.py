@@ -67,7 +67,7 @@ class TickerAssetsBase(AssetsBase):
                 if asset.ticker == item:
                     return asset
             else:
-                raise KeyError(f"{self.__class__.__name__}")
+                raise KeyError(f"{item} is not in {self._name}")
         elif isinstance(item, (int, slice)):
             return self._assets[item]
         else:

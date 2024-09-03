@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from ..assets.asset_base import TickerAssetBase
-from ..data.price_data import CoinPriceData
+from ..data.price_datas.coin_price_data import CoinPriceData
 
 
 @dataclass
@@ -28,6 +28,3 @@ class Coin(TickerAssetBase):
         나는 실시간 정보를 기반으로 거래는 하지 않는 것을 생각하고 있다.
         """
         return CoinPriceData(self)
-
-    def update_price(self):
-        self.price.update()
