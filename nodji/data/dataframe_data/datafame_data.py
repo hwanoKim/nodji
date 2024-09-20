@@ -89,14 +89,19 @@ class DataFrameData:
 
     @property
     def exists_file(self):
-        return nd.exists_path(self.path)
+        for cls in DataFrameDataLoaderBase.__subclasses__():
+            if cls.exists(self.name):
+                return True
+        else:
+            return False
 
     @property
     def exists_data(self):
         return not self._df.empty
 
     @property
-    def path(self):
+    def save_path(self):
+        """현재의 데이터를 기반으로 저장할 경로를 반환한다."""
         if isinstance(self._df.index, pd.DatetimeIndex):
             return nd.Paths.DATABASE / f"{self.name}"
         else:
@@ -139,10 +144,13 @@ class DataFrameData:
             raise NotImplementedError("value type must be NTime")
 
     def load(self) -> pd.DataFrame:
-        if nd.exists_path(self.path):
-            return pd.read_pickle(self.path)
-        else:
-            return pd.DataFrame()
+        for cls in DataFrameDataLoaderBase.__subclasses__():
+            if cls.exists(self.name):
+                ins = cls(self)
+                self._df = ins.load()
+                logger.info(f"{self.name}'s dataframe loaded at {ins.path}")
+                return self._df
+        return pd.DataFrame()
 
     def copy(self) -> 'DataFrameData':
         new_data = DataFrameData(self.name)
