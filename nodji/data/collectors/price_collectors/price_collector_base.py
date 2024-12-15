@@ -2,7 +2,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ...price_datas.asset_price_data_base import AssetPriceDataBase
-    from nodji.data.dataframe_data.datafame_data import DataFrameData
+    from nodji.data.ndata.ndata import DataFrameData
 
 
 class AsssetPriceCollectorBase:

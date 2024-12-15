@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
 from .asset_price_updater_base import AssetPriceDataUpdaterBase
-from ..collectors.price_collectors.coin_price_collector import CoinPriceCollector
+from nodji.data.collectors.price_collectors.coin_price_collector import CoinPriceCollector
 
 if TYPE_CHECKING:
-    from ..price_datas.coin_price_data import CoinPriceData
-    from ...common.ntime import NTime
+    from nodji.data.price_datas.coin_price_data import CoinPriceData
+    from nodji.common.ntime import NTime
 
 
 class CoinPriceUpdater(AssetPriceDataUpdaterBase):

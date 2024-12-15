@@ -7,41 +7,63 @@ import calendar
 import nodji as nd
 
 if TYPE_CHECKING:
-    from .datafame_data import DataFrameData
+    from .ndata import NData
 
 
-def make_database_folder(func):
-    def wrapper(self, *args, **kwargs):
-        if not nd.exists_path(nd.Paths.DATABASE):
-            nd.make_directory(nd.Paths.DATABASE)
-        return func(self, *args, **kwargs)
+class NDataLoaderBase:
+    def __init__(self, ndata: 'NData'):
+        self._ndata = ndata
+        self._name = ndata.name
+        self._ndf = ndata._ndf
 
-    return wrapper
+    @classmethod
+    def has_matching_file(cls, name: str) -> bool:
+        """해당 이름의 파일이 존재하는지 확인
 
-
-class DataFrameDataSaverBase:
-    def __init__(self, data: 'DataFrameData'):
-        self._data = data
-        self._name = data.name
-        self._df = data._df
-        self._path = data.path
+        설명:
+            각 loader에 맞는 파일이 존재하는지 확인한다.
+                예를 들어 GeneralNDataLoader는 하나짜리 파일이 필요하다
+                TimeSeriesNDataLoader는 Month별로 파일이 필요하기 때문에
+                특정 이름의 폴더가 필요하다. 이런식으로 각각의 loader에 맞는
+                파일이 존재하는지 확인하는 함수이다.
+        """
+        raise NotImplementedError("has_matching_file method must be implemented in DataFrameDataSaverBase")
 
     @classmethod
     def is_match(cls, dataframe: pd.DataFrame) -> bool:
         raise NotImplementedError("is_match method must be implemented in DataFrameDataSaverBase")
 
-    @make_database_folder
-    def save(self):
+    def load(self):
         raise NotImplementedError("save method must be implemented in DataFrameDataSaverBase")
 
 
-class DatetimeIndexSaver(DataFrameDataSaverBase):
+class GeneralNDataLoader(NDataLoaderBase):
+    @classmethod
+    def is_match(cls, dataframe: pd.DataFrame) -> bool:
+        return not isinstance(dataframe.index, pd.DatetimeIndex)
+
+    @classmethod
+    def has_matching_file(cls, name: str) -> bool:
+        return nd.exists_path(nd.Paths.DATABASE / f"{name}.df")
+
+    @property
+    def _file_path(self):
+        return nd.Paths.DATABASE / f"{self._name}.df"
+
+    def load(self) -> nd.NDataFrame:
+        return self._ndf.load_from_file(self._file_path)
+
+
+class TimeSeriesNDataLoader(NDataLoaderBase):
     @classmethod
     def is_match(cls, dataframe: pd.DataFrame) -> bool:
         return isinstance(dataframe.index, pd.DatetimeIndex)
 
-    @make_database_folder
-    def save(self):
+    @classmethod
+    def has_matching_file(cls, name: str) -> bool:
+        return nd.exists_path(nd.Paths.DATABASE / name)
+
+    def load(self):
         if not nd.exists_path(self._path):
             nd.make_directory(self._path)
         if self._df.empty:
@@ -64,14 +86,3 @@ class DatetimeIndexSaver(DataFrameDataSaverBase):
     def _get_monthly_file_path(self, year, month):
         file_name = self._name + '_' + str(year) + str(month).zfill(2)
         return self._path / f"{file_name}.{nd.consts.Extensions.DATAFRAME_DATA}"
-
-
-class NonDatetimeIndexSaver(DataFrameDataSaverBase):
-    @classmethod
-    def is_match(cls, dataframe: pd.DataFrame) -> bool:
-        return not isinstance(dataframe.index, pd.DatetimeIndex)
-
-    @make_database_folder
-    def save(self):
-        self._df.to_pickle(self._path)
-

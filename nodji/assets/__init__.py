@@ -1,5 +1,5 @@
-from .coins import Coins
-from .assets_base import AssetsBase
+from .coin.coins import Coins
+from .asset_base import AssetsBase
 
 
 class Assets:
@@ -26,7 +26,7 @@ class Assets:
     def update_item(self):
         """종류별로 각 종목들을 업데이트 한다."""
         for assets in self._all_asset_sequences:
-            assets.update_item()
+            assets.update_items()
 
     def update_price(self):
         """모든 종목들의 가격을 업데이트 한다."""

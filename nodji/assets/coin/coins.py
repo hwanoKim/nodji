@@ -1,20 +1,7 @@
-"""
-coin을 분류한것은 순환 import를 막기 위해서이다.
-
-Coins <- Coin
-Coins <- CoinsDataConverter <- Coin
-
-오류났던 과거는:
-    coins.py 모듈에 Coins, Coin이 모두 있었다.
-    이 파일에서 CoinsDataConverter을 불렀어야 했으나
-    CoinsDataConverter에서도 Coin을 불러서 사용했어야 했다.
-"""
-
-from .coin import Coin
-from .assets_base import TickerAssetsBase
-from ..data.converters.items_converters.coin_items_converter import CoinItemsConverter
-from ..data.collectors.items_collectors.coin_items_collector import CoinItemsCollector
-import nodji as nd
+from ...assets.asset_base import TickerAssetsBase
+from ...assets.coin.coin import Coin
+from ...data.collectors.items_collectors.coin_items_collector import CoinItemsCollector
+from ...data.converters.asset_items_converters.coin_items_converter import CoinItemsConverter
 
 
 class Coins(TickerAssetsBase):
@@ -35,7 +22,7 @@ class Coins(TickerAssetsBase):
     def _items_coll(self):
         return CoinItemsCollector(self)
 
-    def update_item(self):
+    def update_items(self):
         """종목을 업데이트 한다.
 
         설명: 지우고 다시 만든다.
@@ -44,6 +31,6 @@ class Coins(TickerAssetsBase):
             항상 새롭게 전체 리스트를 서버에서 받아온다.
         """
         self._assets = self._items_conv.api_to_asset_items(self._items_coll.get_from_upbit())
-        df = self._items_conv.asset_items_to_dataframe(self._assets)
-        self._data(df)
+        ndf = self._items_conv.asset_items_to_ndataframe(self._assets)
+        self._data.set_ndataframe(ndf)
         self._data.save()

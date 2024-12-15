@@ -1,4 +1,4 @@
-from ..price_datas.asset_price_data_base import AssetPriceDataBase
+from nodji.data.price_datas.asset_price_data_base import AssetPriceDataBase
 import nodji as nd
 
 

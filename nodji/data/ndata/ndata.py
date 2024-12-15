@@ -3,7 +3,6 @@
 하나의 데이터를 관리하는데
 각각의 이름으로 정의하며 형식은 pd.DataFrame을 빌려온다.
 """
-from pathlib import Path
 from typing import Optional
 
 import nodji as nd
@@ -11,61 +10,42 @@ import pandas as pd
 
 from loguru import logger
 from ...common.ntime import NTime
-from .dataframe_data_saver import DataFrameDataSaverBase
+from .ndata_save import NDataSaverBase
+from .ndata_load import NDataLoaderBase
 
 
-class DataFrameData:
-    """DataFrame 데이터를 저장하는 클래스
+class NData:
+    """데이터를 저장하는 클래스.
 
-    Notes:
-        내부의 pd.DataFrame을 최대한 사용자가 직접 다루지 않게 하기 위해서 만들었다.
-            머리가 멍청해서 pd.DataFrame을 다루는데 매번 헷갈린다.
-            그래서 pd.DataFrame을 내부로 숨기고 내가 이해하기 위한 방식을 통해서
-            wrapper를 만들었다.
+    설명:
+        특징:
+            데이터는 이름으로 구분한다.
+            내부에서는 NDataFrame을 기반으로 한다.
+            이름을 기준으로 Data가 정의 되는데 Data의 instance를 생성해도
+            자동으로 load하거나 하지는 않는다.
+            instance만 생성하고 필요할때만 실제 데이터를 읽는다.
+
+        확장자:
+            결국 실제 저장은 최종적으로 DataFrame을 저장하기 때문에
+            개별적 파일은 .df로 저장한다.
+
+        저장 / 불러오기:
+            이름을 기반으로 하여 저장 / 불러오기 기능을 포함하였다.
+            이름으로한 경로가 자동으로 지정된다.
 
         시간 단위의 개념
             또한 저장할 때 자동으로 너무 긴 시계열의 데이터를 분할 저장, 불러오기의 기능도 함께 한다.
-            일반 데이터와 분당 시간데이터가 있다.
-            index가 시계열인 데이터는 Monlty로 저장한다.
-            이것도 나중에는 직접 지정할 수 있어야 할것이다.
+            시계열 index를 가지는 데이터라면 시간 단위에 따라서 분할 한다.
+            예를 들어 index가 분당인 데이터는 Monlty로 저장한다.
+            index가 일단위 데이터는 Yearly로 저장한다.
     """
 
     def __init__(self, name: str):
-        self.name = name
-        self._df = pd.DataFrame()
+        self._name = name
+        self._ndf = nd.NDataFrame()
 
     def __repr__(self):
-        return self._df.__repr__()
-
-    def __call__(self, df: pd.DataFrame):
-        """데이터프레임을 설정한다.
-
-        Notes:
-            기본 컨셉:
-                nodji 안에서는 기본적으로 dataframe의 사용방법을 몰라도 되도록
-                DataFrameData라는 클래스를 만들어서 dataframe 대용으로 사용하도록 한다.
-
-            이름 혹은 경로:
-                이름이든 path이든 사실 둘다 path를 지정하기 위한 방법 중 하나이다.
-                둘중 하나의 방법을 사용하여 DataFrameData를 정의하여 사용하자.
-                만약 불러오기 혹은 저장을 하지 않는 임시 DataFrameData를 만들수도 있다.
-                그럴경우에는 이름 혹은 경로가 둘다 없을 수도 있다.
-
-            __call__ 함수:
-                dataframe 값을 적용하는 방법이다.
-                마음같아서는
-                    data = DataFrameData('name')
-                    data = df
-
-                이렇게 set을 하고 싶지만
-                이렇게 되면 당연히 그냥 instance가 아닌 df로 변수가 교체되어버리므로
-                set처럼 보이는 방법을 찾다가 __call__을 사용하게 되었다.
-                    data = DataFrameData('name')
-                    data(df)
-        """
-        assert isinstance(df, pd.DataFrame), f"df must be pd.DataFrame but {type(df)}"
-        self._df = df
-        return self
+        return self._ndf.__repr__()
 
     def __add__(self, other):
         """데이터를 더한다."""
@@ -88,16 +68,16 @@ class DataFrameData:
             raise NotImplementedError("item type must be NTime")
 
     @property
-    def exists_file(self):
-        for cls in DataFrameDataLoaderBase.__subclasses__():
-            if cls.exists(self.name):
+    def name(self):
+        return self._name
+
+    @property
+    def exists(self):
+        for cls in NDataLoaderBase.__subclasses__():
+            if cls.has_matching_file(self.name):
                 return True
         else:
             return False
-
-    @property
-    def exists_data(self):
-        return not self._df.empty
 
     @property
     def save_path(self):
@@ -143,23 +123,52 @@ class DataFrameData:
         else:
             raise NotImplementedError("value type must be NTime")
 
-    def load(self) -> pd.DataFrame:
-        for cls in DataFrameDataLoaderBase.__subclasses__():
-            if cls.exists(self.name):
-                ins = cls(self)
-                self._df = ins.load()
-                logger.info(f"{self.name}'s dataframe loaded at {ins.path}")
-                return self._df
-        return pd.DataFrame()
+    def load(self) -> nd.NDataFrame:
+        """읽어온다. 없으면 빈 데이터프레임을 반환한다."""
+        for cls in NDataLoaderBase.__subclasses__():
+            if cls.has_matching_file(self.name):
+                self._ndf = cls(self).load()
+                logger.info(f"{self.name}'s ndata loaded")
+                return self._ndf
+        return nd.NDataFrame()
 
     def copy(self) -> 'DataFrameData':
         new_data = DataFrameData(self.name)
         new_data(self._df.copy())
         return new_data
 
+    def set_ndataframe(self, ndataframe: nd.NDataFrame):
+        """데이터프레임을 설정한다.
+
+        Notes:
+            기본 컨셉:
+                nodji 안에서는 기본적으로 dataframe의 사용방법을 몰라도 되도록
+                DataFrameData라는 클래스를 만들어서 dataframe 대용으로 사용하도록 한다.
+
+            이름 혹은 경로:
+                이름이든 path이든 사실 둘다 path를 지정하기 위한 방법 중 하나이다.
+                둘중 하나의 방법을 사용하여 DataFrameData를 정의하여 사용하자.
+                만약 불러오기 혹은 저장을 하지 않는 임시 DataFrameData를 만들수도 있다.
+                그럴경우에는 이름 혹은 경로가 둘다 없을 수도 있다.
+        """
+        assert isinstance(ndataframe, nd.NDataFrame), f"ndataframe must be NDataFrame but {type(ndataframe)}"
+        self._ndf = ndataframe
+        return self
+
     def save(self):
-        for cls in DataFrameDataSaverBase.__subclasses__():
-            if cls.is_match(self._df):
+        for cls in NDataSaverBase.__subclasses__():
+            if cls.is_match(self._ndf):
                 cls(self).save()
-                logger.info(f"{self.name}'s dataframe saved at {self.path}")
+                logger.info(f"{self.name}'s ndata saved")
                 return
+
+
+class NDataIndex:
+    """NData의 index를 관리하는 클래스.
+
+    설명:
+    """
+
+    def __init__(self, index: pd.Index):
+        self._index = index
+

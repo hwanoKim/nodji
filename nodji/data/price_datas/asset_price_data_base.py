@@ -1,37 +1,22 @@
 from typing import TYPE_CHECKING
 
-import pandas as pd
-
 import nodji as nd
+from ..ndata.ndata import NData
 
 if TYPE_CHECKING:
     from ...assets.asset_base import AssetBase, TickerAssetBase
 
 
-class AssetPriceDataBase:
+class AssetPriceDataBase(NData):
 
     def __init__(self, asset: 'AssetBase'):
+        super().__init__('price')
         self._asset = asset
-        self._data = None
-
-    def __repr__(self):
-        return self._data.__repr__()
-
-    @property
-    def start_time(self):
-        return
-
-    @property
-    def end_time(self):
-        return
 
     @property
     def update(self):
         """가격 정보를 업데이트 한다."""
         raise NotImplementedError("update method must be implemented in PriceDataBase")
-
-    def load(self):
-        raise NotImplementedError("load_price method must be implemented in PriceDataBase")
 
     def _set_initial_data_columns(self):
         """PriceTypeBase 서브 클래스에서 구현한다"""
