@@ -1,12 +1,10 @@
 from typing import TYPE_CHECKING
 from dateutil.rrule import rrule, MONTHLY
-
 import pandas as pd
 import calendar
 
 import nodji as nd
 
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .ndata import NData
 
@@ -24,10 +22,10 @@ class NDataSaverBase:
     def __init__(self, data: 'NData'):
         self._data = data
         self._name = data.name
-        self._ndf = data._ndf
+        self._df = data._df
 
     @classmethod
-    def is_match(cls, ndataframe: nd.NDataFrame) -> bool:
+    def is_match(cls, ndataframe: 'NData') -> bool:
         raise NotImplementedError("is_match method must be implemented in DataFrameDataSaverBase")
 
     @make_database_folder
@@ -37,7 +35,7 @@ class NDataSaverBase:
 
 class GeneralNDataSaver(NDataSaverBase):
     @classmethod
-    def is_match(cls, ndataframe: nd.NDataFrame) -> bool:
+    def is_match(cls, ndataframe: 'NData') -> bool:
         return not isinstance(ndataframe.index, pd.DatetimeIndex)
 
     @property
@@ -46,12 +44,16 @@ class GeneralNDataSaver(NDataSaverBase):
 
     @make_database_folder
     def save(self):
-        self._ndf.save_to_file(self._file_path)
+        """파일에 데이터를 저장한다.
+
+        파일의 형식은 무조건 pickle로 저장된다.
+        """
+        self._df.to_pickle(str(self._file_path))
 
 
 class TimeSeriesNDataSaver(NDataSaverBase):
     @classmethod
-    def is_match(cls, ndataframe: nd.NDataFrame) -> bool:
+    def is_match(cls, ndataframe: 'NData') -> bool:
         return isinstance(ndataframe.index, pd.DatetimeIndex)
 
     @make_database_folder
@@ -77,4 +79,4 @@ class TimeSeriesNDataSaver(NDataSaverBase):
 
     def _get_monthly_file_path(self, year, month):
         file_name = self._name + '_' + str(year) + str(month).zfill(2)
-        return self._path / f"{file_name}.{nd.consts.Extensions.DATAFRAME_DATA}"
+        return self._path / f"{file_name}.{nd.consts.Extensions.NDATA}"

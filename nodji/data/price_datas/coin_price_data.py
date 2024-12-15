@@ -15,6 +15,3 @@ class CoinPriceData(MinutePriceData, OHLCVData):
     @property
     def update(self):
         return CoinPriceUpdater(self)
-
-    def load(self):
-        self._data.load()

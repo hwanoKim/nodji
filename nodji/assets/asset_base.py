@@ -8,9 +8,10 @@ from ..data.asset_data.asset_data import AssetsData
 
 @dataclass
 class AssetBase:
+
     @property
     def price_data(self):
-        return AssetPriceDataBase(self)
+        raise NotImplementedError("price_data property must be implemented in AssetBase")
 
     def update_price(self, start_time=None, end_time=None):
         """가격 정보를 업데이트 한다."""
@@ -74,7 +75,7 @@ class AssetsBase(Sequence[AssetBase]):
 
     def _load_asset_items(self):
         """어셋의 리스트들을 디비에서 읽어온다"""
-        self._assets = self._items_conv.ndataframe_to_asset_items(self._data.load())
+        self._assets = self._items_conv.ndata_to_asset_items(self._data.load())
 
 
 class TickerAssetsBase(AssetsBase):

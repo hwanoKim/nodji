@@ -1,5 +1,5 @@
 class Extensions:
-    DATAFRAME_DATA = 'df'
+    NDATA = 'df'
 
 
 class Upbit:

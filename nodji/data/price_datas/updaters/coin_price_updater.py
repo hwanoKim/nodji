@@ -5,7 +5,7 @@ from nodji.data.collectors.price_collectors.coin_price_collector import CoinPric
 
 if TYPE_CHECKING:
     from nodji.data.price_datas.coin_price_data import CoinPriceData
-    from nodji.common.ntime import NTime
+    from nodji.core.ntime import NTime
 
 
 class CoinPriceUpdater(AssetPriceDataUpdaterBase):

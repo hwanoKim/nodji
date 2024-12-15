@@ -1,17 +1,15 @@
 from typing import TYPE_CHECKING
 
-import nodji as nd
 from ..ndata.ndata import NData
 
 if TYPE_CHECKING:
-    from ...assets.asset_base import AssetBase, TickerAssetBase
+    from ...assets.asset_base import TickerAssetBase
 
 
 class AssetPriceDataBase(NData):
 
-    def __init__(self, asset: 'AssetBase'):
-        super().__init__('price')
-        self._asset = asset
+    def __init__(self, name: str):
+        super().__init__(name)
 
     @property
     def update(self):
@@ -27,15 +25,11 @@ class TickerPriceDataBase(AssetPriceDataBase):
     _asset: 'TickerAssetBase'
 
     def __init__(self, asset: 'TickerAssetBase'):
-        super().__init__(asset)
-        self._data = nd.DataFrameData(self._asset.ticker)
+        super().__init__(asset.ticker)
 
 
-class PriceTypeBase(TickerPriceDataBase):
-    """가격의 형식 base class"""
-
-
-class OHLCVData(PriceTypeBase):
+class OHLCVData(TickerPriceDataBase):
+    """OHLCV 데이터의 base class"""
 
     def _set_initial_data_columns(self):
         """빈 ohlcv dataframe 데이터를 만든다.
@@ -51,14 +45,10 @@ class OHLCVData(PriceTypeBase):
                 Volume: 거래량
                 TradePrice: 거래금액
         """
-        assert not self._data.exists_file, f"{self._data.name} data already exists"
+        assert not self.exists, f"{self.name} data already exists"
+        assert self.is_empty, "data must be empty"
         self._data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'TradePrice']
 
 
-class TimeTypeBase(TickerPriceDataBase):
-    """시간의 형식 base class"""
-    pass
-
-
-class MinutePriceData(TimeTypeBase):
+class MinutePriceData(TickerPriceDataBase):
     pass

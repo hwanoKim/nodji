@@ -19,14 +19,13 @@ class AssetPriceDataUpdaterBase:
 
     def __init__(self, price_data: 'AssetPriceDataBase'):
         self._price_data = price_data
-        self._data: nd.DataFrameData = price_data._data
 
     def __call__(self, start_time=None, end_time=None):
         self._start_time = nd.NTime(start_time)
         self._end_time = nd.NTime(end_time)
         self._validate_times()
         self._update()
-        self._data.save()
+        self._price_data.save()
 
     @property
     def _coll(self):
@@ -37,11 +36,11 @@ class AssetPriceDataUpdaterBase:
         raise NotImplementedError("get_data_from_time_range method must be implemented in PriceUpdaterBase")
 
     def _update(self):
-        if not self._data.exists_file:
+        if not self._price_data.exists:
             self._price_data._set_initial_data_columns()
-        self._orig_data = self._data.copy()
+        self._orig_df = self._price_data.copy_dataframe()
 
-        self._add_price_after_data()
+        self._add_price_after_old_data()
         # self._add_price_before_data(old_end_time)
         # self._add_price_missing_time(old_start_time, old_end_time)
 
@@ -49,7 +48,7 @@ class AssetPriceDataUpdaterBase:
         if not self._start_time.is_none and not self._end_time.is_none:
             assert self._start_time < self._end_time, "start_time must be less than end_time"
 
-    def _add_price_after_data(self):
+    def _add_price_after_old_data(self):
         """기존 데이터의 마지막 시간부터 가장 최신의 시간까지 데이터를 추가한다."""
         if self._needs_update_after_data():
             start_time, end_time = self._get_time_range_of_add_after_data()
@@ -58,13 +57,13 @@ class AssetPriceDataUpdaterBase:
     def _needs_update_after_data(self):
         """데이터를 추가해야 하는지 확인한다."""
         if self._end_time:
-            if self._orig_data.exists_data:
-                if self._end_time < self._orig_data.end_time:
+            if self._orig_df.exists_data:
+                if self._end_time < self._orig_df.end_time:
                     return False
         return True
 
     def _get_time_range_of_add_after_data(self):
-        start_time = self._orig_data.end_time
+        start_time = self._orig_df.end_time
         end_time = nd.NTime.get_current_time()
 
         if self._start_time:

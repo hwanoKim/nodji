@@ -25,12 +25,13 @@ class Coins(TickerAssetsBase):
     def update_items(self):
         """종목을 업데이트 한다.
 
-        설명: 지우고 다시 만든다.
-            기존 데이터를 지우고 추가하는 작업을 하지 않는다.
-            생각해보면 무의미한 일이다.
-            항상 새롭게 전체 리스트를 서버에서 받아온다.
+        설명:
+            지우고 다시 만든다.
+                기존 데이터에서 없어지는 것을 지우고 추가하는 작업을 하지 않는다.
+                생각해보면 알겠지만 무의미한 일이다.
+                항상 새롭게 전체 리스트를 서버에서 받아온다.
         """
         self._assets = self._items_conv.api_to_asset_items(self._items_coll.get_from_upbit())
-        ndf = self._items_conv.asset_items_to_ndataframe(self._assets)
-        self._data.set_ndataframe(ndf)
+        df = self._items_conv.asset_items_to_dataframe(self._assets)
+        self._data.set_dataframe(df)
         self._data.save()

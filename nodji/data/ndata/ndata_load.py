@@ -14,7 +14,7 @@ class NDataLoaderBase:
     def __init__(self, ndata: 'NData'):
         self._ndata = ndata
         self._name = ndata.name
-        self._ndf = ndata._ndf
+        self._df = ndata._df
 
     @classmethod
     def has_matching_file(cls, name: str) -> bool:
@@ -30,10 +30,20 @@ class NDataLoaderBase:
         raise NotImplementedError("has_matching_file method must be implemented in DataFrameDataSaverBase")
 
     @classmethod
+    def get_all_data_names(cls) -> list[str]:
+        """load 할 수 있는 모든 데이터 이름을 반환"""
+        raise NotImplementedError("get_all_data_names method must be implemented in DataFrameDataSaverBase")
+
+    @classmethod
     def is_match(cls, dataframe: pd.DataFrame) -> bool:
         raise NotImplementedError("is_match method must be implemented in DataFrameDataSaverBase")
 
-    def load(self):
+    def load(self) -> pd.DataFrame:
+        """데이터를 로드한다.
+
+        설명:
+            NData의 내부 형식인 pd.DataFrame을 반환한다
+        """
         raise NotImplementedError("save method must be implemented in DataFrameDataSaverBase")
 
 
@@ -46,12 +56,23 @@ class GeneralNDataLoader(NDataLoaderBase):
     def has_matching_file(cls, name: str) -> bool:
         return nd.exists_path(nd.Paths.DATABASE / f"{name}.df")
 
+    @classmethod
+    def get_all_data_names(cls) -> list[str]:
+        return [file.split('.')[0]
+                for file in nd.get_files_from_directory(nd.Paths.DATABASE,
+                                                        ext=nd.consts.Extensions.NDATA)]
+
     @property
     def _file_path(self):
         return nd.Paths.DATABASE / f"{self._name}.df"
 
-    def load(self) -> nd.NDataFrame:
-        return self._ndf.load_from_file(self._file_path)
+    def load(self) -> pd.DataFrame:
+        """파일에서 데이터를 불러온다.
+
+        파일의 형식은 무조건 pickle로 저장되어 있어야 한다.
+        """
+        assert nd.exists_path(self._file_path), f"file not found: {self._file_path}"
+        return pd.read_pickle(str(self._file_path))
 
 
 class TimeSeriesNDataLoader(NDataLoaderBase):
@@ -63,7 +84,11 @@ class TimeSeriesNDataLoader(NDataLoaderBase):
     def has_matching_file(cls, name: str) -> bool:
         return nd.exists_path(nd.Paths.DATABASE / name)
 
-    def load(self):
+    @classmethod
+    def get_all_data_names(cls) -> list[str]:
+        return nd.get_folders_from_directory(nd.Paths.DATABASE)
+
+    def load(self) -> pd.DataFrame:
         if not nd.exists_path(self._path):
             nd.make_directory(self._path)
         if self._df.empty:
@@ -85,4 +110,4 @@ class TimeSeriesNDataLoader(NDataLoaderBase):
 
     def _get_monthly_file_path(self, year, month):
         file_name = self._name + '_' + str(year) + str(month).zfill(2)
-        return self._path / f"{file_name}.{nd.consts.Extensions.DATAFRAME_DATA}"
+        return self._path / f"{file_name}.{nd.consts.Extensions.NDATA}"

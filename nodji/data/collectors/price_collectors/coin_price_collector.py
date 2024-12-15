@@ -8,7 +8,7 @@ from ...converters.price_converters.coin_price_converter import CoinPriceConvert
 
 if TYPE_CHECKING:
     from ...price_datas.coin_price_data import CoinPriceData
-    from ....common.ntime import NTime
+    from ....core.ntime import NTime
 
 
 class CoinPriceCollector(AsssetPriceCollectorBase):
