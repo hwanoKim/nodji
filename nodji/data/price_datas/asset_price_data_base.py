@@ -22,9 +22,9 @@ class AssetPriceDataBase(NData):
 
 
 class TickerPriceDataBase(AssetPriceDataBase):
-    _asset: 'TickerAssetBase'
 
     def __init__(self, asset: 'TickerAssetBase'):
+        self._asset = asset
         super().__init__(asset.ticker)
 
 
@@ -47,7 +47,7 @@ class OHLCVData(TickerPriceDataBase):
         """
         assert not self.exists, f"{self.name} data already exists"
         assert self.is_empty, "data must be empty"
-        self._data.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'TradePrice']
+        self._ndf.columns = ['Open', 'High', 'Low', 'Close', 'Volume', 'TradePrice']
 
 
 class MinutePriceData(TickerPriceDataBase):

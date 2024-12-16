@@ -11,6 +11,7 @@ class LogLevel(Enum):
 
 
 class DataStorageFrequency(Enum):
+    """이거 왜 만들었지??"""
     DAILY = auto()
     WEEKLY = auto()
     MONTHLY = auto()
@@ -20,3 +21,8 @@ class DataStorageFrequency(Enum):
 class TimeZone(Enum):
     SEOUL = ZoneInfo("Asia/Seoul")
     UTC = ZoneInfo("UTC")
+
+
+class NDataFrameIndex:
+    NONE = auto()
+    DATETIME = auto()

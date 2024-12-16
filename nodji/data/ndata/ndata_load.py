@@ -14,7 +14,7 @@ class NDataLoaderBase:
     def __init__(self, ndata: 'NData'):
         self._ndata = ndata
         self._name = ndata.name
-        self._df = ndata._df
+        self._ndf = ndata._ndf
 
     @classmethod
     def has_matching_file(cls, name: str) -> bool:
@@ -38,7 +38,7 @@ class NDataLoaderBase:
     def is_match(cls, dataframe: pd.DataFrame) -> bool:
         raise NotImplementedError("is_match method must be implemented in DataFrameDataSaverBase")
 
-    def load(self) -> pd.DataFrame:
+    def load(self) -> 'nd.NDataFrame':
         """데이터를 로드한다.
 
         설명:
@@ -66,13 +66,13 @@ class GeneralNDataLoader(NDataLoaderBase):
     def _file_path(self):
         return nd.Paths.DATABASE / f"{self._name}.df"
 
-    def load(self) -> pd.DataFrame:
+    def load(self) -> 'nd.NDataFrame':
         """파일에서 데이터를 불러온다.
 
         파일의 형식은 무조건 pickle로 저장되어 있어야 한다.
         """
         assert nd.exists_path(self._file_path), f"file not found: {self._file_path}"
-        return pd.read_pickle(str(self._file_path))
+        return nd.NDataFrame(pd.read_pickle(str(self._file_path)))
 
 
 class TimeSeriesNDataLoader(NDataLoaderBase):
@@ -88,7 +88,7 @@ class TimeSeriesNDataLoader(NDataLoaderBase):
     def get_all_data_names(cls) -> list[str]:
         return nd.get_folders_from_directory(nd.Paths.DATABASE)
 
-    def load(self) -> pd.DataFrame:
+    def load(self) -> 'nd.NDataFrame':
         if not nd.exists_path(self._path):
             nd.make_directory(self._path)
         if self._df.empty:

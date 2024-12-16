@@ -25,11 +25,11 @@ class AssetPriceDataUpdaterBase:
         self._end_time = nd.NTime(end_time)
         self._validate_times()
         self._update()
-        self._price_data.save()
+        # self._price_data.save()
 
     @property
-    def _coll(self):
-        raise NotImplementedError("coll property must be implemented in PriceUpdaterBase")
+    def _conv(self):
+        raise NotImplementedError("converter property must be implemented in PriceUpdaterBase")
 
     def _update_data_from_time_range(self, start_time, end_time):
         """collector를 이용하여 상황에 맞게 값을 가져온다."""
@@ -38,32 +38,35 @@ class AssetPriceDataUpdaterBase:
     def _update(self):
         if not self._price_data.exists:
             self._price_data._set_initial_data_columns()
-        self._orig_df = self._price_data.copy_dataframe()
 
-        self._add_price_after_old_data()
-        # self._add_price_before_data(old_end_time)
+        self._old_ndf = self._price_data.copy_ndataframe()
+        self._add_price_after_old_ndataframe()
+        # self._add_price_before_old_ndataframe()
         # self._add_price_missing_time(old_start_time, old_end_time)
 
     def _validate_times(self):
         if not self._start_time.is_none and not self._end_time.is_none:
             assert self._start_time < self._end_time, "start_time must be less than end_time"
 
-    def _add_price_after_old_data(self):
+    def _add_price_after_old_ndataframe(self):
         """기존 데이터의 마지막 시간부터 가장 최신의 시간까지 데이터를 추가한다."""
-        if self._needs_update_after_data():
+        if self._needs_update_after_old_ndataframe():
             start_time, end_time = self._get_time_range_of_add_after_data()
             self._update_data_from_time_range(start_time, end_time)
 
-    def _needs_update_after_data(self):
-        """데이터를 추가해야 하는지 확인한다."""
+    def _needs_update_after_old_ndataframe(self):
+        """예전 데이터에서 마지막 날짜 이후로 추가해야 하는지 확인한다."""
         if self._end_time:
-            if self._orig_df.exists_data:
-                if self._end_time < self._orig_df.end_time:
+            if self._old_ndf.is_empty:
+                if self._end_time < self._old_ndf.end_time:
                     return False
         return True
 
     def _get_time_range_of_add_after_data(self):
-        start_time = self._orig_df.end_time
+        if self._old_ndf:
+            start_time = self._old_ndf.end_time
+        else:
+            start_time = nd.NTime(None)
         end_time = nd.NTime.get_current_time()
 
         if self._start_time:
@@ -84,7 +87,7 @@ class AssetPriceDataUpdaterBase:
         for start_time, end_time in data.missing_times:
             self._data += self._coll.get_from_upbit(start_time, end_time)
 
-    def _add_price_before_data(self, old_start_time):
+    def _add_price_before_old_ndataframe(self, old_start_time):
         start_time = self._get_time_range_of_add_after_data(old_end_time)
         end_time = self._get_end_time_of_add_after_data(old_end_time)
         self._data += self._coll.get_from_upbit(start_time, end_time)

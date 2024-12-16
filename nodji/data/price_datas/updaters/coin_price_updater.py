@@ -1,11 +1,12 @@
 from typing import TYPE_CHECKING
-
+import nodji as nd
 from .asset_price_updater_base import AssetPriceDataUpdaterBase
-from nodji.data.collectors.price_collectors.coin_price_collector import CoinPriceCollector
+from ...converters.price_converters.coin_price_converter import CoinPriceConverter
+from loguru import logger
 
 if TYPE_CHECKING:
-    from nodji.data.price_datas.coin_price_data import CoinPriceData
-    from nodji.core.ntime import NTime
+    from ..coin_price_data import CoinPriceData
+    from ....core.ntime import NTime
 
 
 class CoinPriceUpdater(AssetPriceDataUpdaterBase):
@@ -24,10 +25,27 @@ class CoinPriceUpdater(AssetPriceDataUpdaterBase):
     """
     _price_data: 'CoinPriceData'
 
+    def __init__(self, price_data: 'CoinPriceData'):
+        super().__init__(price_data)
+        self._ub = nd.external_apis.Upbit()
+
     @property
-    def _coll(self):
-        return CoinPriceCollector(self._price_data)
+    def _conv(self):
+        return CoinPriceConverter(self._price_data)
 
     def _update_data_from_time_range(self, start_time, end_time):
-        return self._coll.get_from_upbit(start_time, end_time)
+        while True:
+            new_data = self._ub.get_minute_candles(self._price_data._asset.ticker, end_time)
+            new_ndf: nd.NDataFrame = self._conv.api_to_ndataframe(new_data)
+            logger.info(f"{end_time} - {self._price_data._asset.ticker}")
 
+            if new_ndf.is_empty:
+                break
+
+            self._old_ndf += new_ndf
+
+            if start_time and start_time >= self._old_ndf.start_time:
+                self._old_ndf.start_time = start_time
+                break
+
+            end_time = new_ndf.start_time

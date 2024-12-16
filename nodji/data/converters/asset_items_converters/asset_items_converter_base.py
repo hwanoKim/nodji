@@ -14,8 +14,8 @@ class AssetItemsConverterBase:
     def api_to_asset_items(self, data: list[dict]):
         raise NotImplementedError(f"{self.__class__.__name__}.api_to_assets")
 
-    def asset_items_to_dataframe(self, assets) -> NData:
+    def asset_items_to_ndataframe(self, assets) -> NData:
         raise NotImplementedError(f"{self.__class__.__name__}.assets_to_ndata")
 
-    def ndata_to_asset_items(self, ndata: NData):
+    def ndataframe_to_asset_items(self, ndata: NData):
         raise NotImplementedError(f"{self.__class__.__name__}.ndata_to_assets")

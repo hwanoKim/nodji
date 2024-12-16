@@ -1,17 +1,18 @@
 from dataclasses import asdict
 import pandas as pd
+import nodji as nd
 from ....data.converters.asset_items_converters.asset_items_converter_base import AssetItemsConverterBase
 from ....data.ndata.ndata import NData
 from ....assets.coin.coin import Coin, CoinMarketCaution
 
 
 class CoinItemsConverter(AssetItemsConverterBase):
-    def ndata_to_asset_items(self, ndata: NData) -> list['Coin']:
-        if ndata.is_empty:
+    def ndataframe_to_asset_items(self, ndataframe: 'nd.NDataFrame') -> list['Coin']:
+        if ndataframe.is_empty:
             return []
         else:
             coins = []
-            for row in ndata.rows:
+            for row in ndataframe.rows:
                 caution = CoinMarketCaution(**row['caution'])
                 coin = Coin(
                     ticker=row['ticker'],
@@ -23,7 +24,7 @@ class CoinItemsConverter(AssetItemsConverterBase):
                 coins.append(coin)
             return coins
 
-    def asset_items_to_dataframe(self, assets: list['Coin']) -> pd.DataFrame:
+    def asset_items_to_ndataframe(self, assets: list['Coin']) -> 'nd.NDataFrame':
         """코인 객체들을 데이터프레임으로 변환한다.
 
         설명:
@@ -38,7 +39,7 @@ class CoinItemsConverter(AssetItemsConverterBase):
                 이렇게 변형된다.
                 # 출력: {'name': 'Bitcoin', 'value': 30000.0}
         """
-        return pd.DataFrame([asdict(asset) for asset in assets])
+        return nd.NDataFrame(pd.DataFrame([asdict(asset) for asset in assets]))
 
     def api_to_asset_items(self, coins: list[dict]) -> list['Coin']:
         return [Coin(ticker=coin['market'],

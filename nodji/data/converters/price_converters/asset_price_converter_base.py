@@ -9,6 +9,6 @@ class AssetPriceConverterBase:
     def __init__(self, assets: 'AssetPriceDataBase'):
         self._assets = assets
 
-    def api_to_dataframe(self, data: dict) -> pd.DataFrame:
+    def api_to_ndataframe(self, data: dict) -> pd.DataFrame:
         """api 데이터를 dataframe으로 변환한다."""
         raise NotImplementedError("api_to_dataframe method must be implemented in PriceConverterBase")

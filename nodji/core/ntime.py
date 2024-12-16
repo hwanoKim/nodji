@@ -26,7 +26,7 @@ class NTime:
         if self.is_none:
             return 'None'
         else:
-            return self._time.strftime("%Y%m%d %H%M%S")
+            return self._time.strftime("%Y/%m/%d %H:%M:%S")
 
     def __gt__(self, other):
         if isinstance(other, NTime):

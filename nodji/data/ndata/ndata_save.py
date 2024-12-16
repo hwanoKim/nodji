@@ -22,7 +22,7 @@ class NDataSaverBase:
     def __init__(self, data: 'NData'):
         self._data = data
         self._name = data.name
-        self._df = data._df
+        self._ndf = data._ndf
 
     @classmethod
     def is_match(cls, ndataframe: 'NData') -> bool:
@@ -48,7 +48,7 @@ class GeneralNDataSaver(NDataSaverBase):
 
         파일의 형식은 무조건 pickle로 저장된다.
         """
-        self._df.to_pickle(str(self._file_path))
+        self._ndf.save_to_file(self._file_path)
 
 
 class TimeSeriesNDataSaver(NDataSaverBase):
