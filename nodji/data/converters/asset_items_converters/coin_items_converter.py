@@ -7,12 +7,12 @@ from ....assets.coin.coin import Coin, CoinMarketCaution
 
 
 class CoinItemsConverter(AssetItemsConverterBase):
-    def ndataframe_to_asset_items(self, ndataframe: 'nd.NDataFrame') -> list['Coin']:
-        if ndataframe.is_empty:
+    def dataframe_to_asset_items(self, dataframe: pd.DataFrame) -> list['Coin']:
+        if dataframe.empty:
             return []
         else:
             coins = []
-            for row in ndataframe.rows:
+            for _, row in dataframe.iterrows():
                 caution = CoinMarketCaution(**row['caution'])
                 coin = Coin(
                     ticker=row['ticker'],
@@ -24,7 +24,7 @@ class CoinItemsConverter(AssetItemsConverterBase):
                 coins.append(coin)
             return coins
 
-    def asset_items_to_ndataframe(self, assets: list['Coin']) -> 'nd.NDataFrame':
+    def asset_items_to_dataframe(self, assets: list['Coin']) -> 'pd.DataFrame':
         """코인 객체들을 데이터프레임으로 변환한다.
 
         설명:
@@ -39,7 +39,7 @@ class CoinItemsConverter(AssetItemsConverterBase):
                 이렇게 변형된다.
                 # 출력: {'name': 'Bitcoin', 'value': 30000.0}
         """
-        return nd.NDataFrame(pd.DataFrame([asdict(asset) for asset in assets]))
+        return pd.DataFrame([asdict(asset) for asset in assets])
 
     def api_to_asset_items(self, coins: list[dict]) -> list['Coin']:
         return [Coin(ticker=coin['market'],

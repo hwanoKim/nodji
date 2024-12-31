@@ -1,5 +1,6 @@
 from ..ndata.ndata import NData
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from ...assets import AssetsBase
     from ...assets.asset_base import AssetBase

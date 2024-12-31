@@ -1,10 +1,3 @@
-"""
-여기서 말하는 DataframeData은 저장단위로 이해하면 좋다.
-하나의 데이터를 관리하는데
-각각의 이름으로 정의하며 형식은 pd.DataFrame을 빌려온다.
-"""
-from typing import Optional
-
 import nodji as nd
 import pandas as pd
 
@@ -12,6 +5,11 @@ from loguru import logger
 from ...core.ntime import NTime
 from .ndata_save import NDataSaverBase
 from .ndata_load import NDataLoaderBase
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ...core.ntime import NTime
 
 
 class NData:
@@ -41,34 +39,35 @@ class NData:
 
         왜 NDataFrame과 통일하지 않았나?
             현재는 NData -> NDataFrame의 구조로 되어 있다.
-            언듯보면 그냥 NData로 두개를 통합해도 되지 않나 싶다.
+            언뜻보면 그냥 NData로 두개를 통합해도 되지 않나 싶다.
             다음과 같은 구조에서 문제가 된다.
                 PriceData는 NData를 상속받아서 사용한다.
                 NData내에서 옛날 데이터를 복사해서 새로운 데이터와 병합하는 등의 과정을
                 거쳐야 한다. 하지만 현재는 NData라는 것은 name을 기준으로 구분되도록 되어 있다.
-                그렇기 때문에 NData를 복사해서 병합할때 하나의 이름을 가진 여러개의
-                instance가 생기게 된다. 따라서 이름을 기준으로 하는
-                NData와 병합등의 과정을 담당할 NDataFrame을 분리하였다.
+                만약 같은 name을 가진 NData가 여러개 있다면 개념적으로 모두 동일한
+                인스턴스여야한다.
+                이러한 문제로 병합할때 문제가 된다.
+                따라서 이름을 기준으로 하는 NData와 병합등의 과정을 담당할 NDataFrame을 분리하였다.
     """
 
     def __init__(self, name: str):
         self._name = name
-        self._ndf = nd.NDataFrame()
+        self._df = pd.DataFrame()
 
     def __repr__(self):
-        return self._ndf.__repr__()
+        return str(self._df)
 
     def __add__(self, other):
         """데이터를 더한다."""
-        if isinstance(other, nd.NDataFrame):
-            self._ndf += other
+        if isinstance(other, pd.DataFrame):
+            self._df += other
             return self
         else:
             raise NotImplementedError(f"other must be pd.DataFrame but {type(other)}")
 
     def __contains__(self, item):
         if isinstance(item, NTime):
-            if self._df.empty:
+            if self._df.is_empty:
                 raise ValueError("data is empty")
             else:
                 start_time = self._df.index.min()
@@ -83,6 +82,13 @@ class NData:
 
     @property
     def exists(self):
+        """저장된 데이터가 존재하는가?
+
+        설명:
+            is_empty와 헷갈릴 수 있다.
+                is_empty는 저장되어 있던 데이터가 존재 하지만
+                비어있는지를 확인하는 것이다.
+        """
         for cls in NDataLoaderBase.__subclasses__():
             if cls.has_matching_file(self.name):
                 return True
@@ -91,85 +97,49 @@ class NData:
 
     @property
     def is_empty(self):
-        return self._ndf.is_empty
+        return self._df.empty
 
     @property
-    def save_path(self):
+    def has_datetime_index(self):
+        return isinstance(self._df.index, pd.DatetimeIndex)
+
+    @property
+    def path(self):
         """현재의 데이터를 기반으로 저장할 경로를 반환한다."""
-        if isinstance(self._df.index, pd.DatetimeIndex):
-            return nd.Paths.DATABASE / f"{self.name}"
+        if self.has_datetime_index:
+            return nd.Paths.DATABASE / self.name
         else:
-            return nd.Paths.DATABASE / f"{self.name}.{nd.consts.Extensions.NDATAFRAME}"
+            return nd.Paths.DATABASE / f"{self.name}.{nd.consts.Extensions.DATAFRAME}"
 
     @property
     def cols(self) -> list[str]:
         """column의 이름을 리스트로 반환한다."""
-        return self._df.columns.tolist()
+        return self._df.columns
 
     @cols.setter
     def cols(self, value):
         """column의 이름을 설정한다."""
         self._df.columns = value
 
-    @property
-    def start_time(self):
-        return self._ndf.start_time
-
-    @start_time.setter
-    def start_time(self, value):
-        self._ndf.start_time = value
-
-    @property
-    def end_time(self):
-        return self._ndf.end_time
-
-    @end_time.setter
-    def end_time(self, value):
-        self._ndf.end_time = value
-
-    def load(self) -> 'nd.NDataFrame':
+    def load(self, start_time: 'NTime' = None, end_time: 'NTime' = None) -> 'pd.DataFrame':
         """읽어온다. 없으면 빈 데이터프레임을 반환한다."""
         for cls in NDataLoaderBase.__subclasses__():
             if cls.has_matching_file(self.name):
-                self._ndf = cls(self).load()
+                self._df = cls(self).load(NTime(start_time), NTime(end_time))
                 logger.info(f"{self.name}'s ndata loaded")
-                return self._ndf
-        return nd.NDataFrame()
-
-    def copy_ndataframe(self) -> 'nd.NDataFrame':
-        return self._ndf.copy()
-
-    def set_ndataframe(self, ndataframe: 'nd.NDataFrame'):
-        """데이터프레임을 설정한다.
-
-        Notes:
-            기본 컨셉:
-                nodji 안에서는 기본적으로 dataframe의 사용방법을 몰라도 되도록
-                DataFrameData라는 클래스를 만들어서 dataframe 대용으로 사용하도록 한다.
-
-            이름 혹은 경로:
-                이름이든 path이든 사실 둘다 path를 지정하기 위한 방법 중 하나이다.
-                둘중 하나의 방법을 사용하여 DataFrameData를 정의하여 사용하자.
-                만약 불러오기 혹은 저장을 하지 않는 임시 DataFrameData를 만들수도 있다.
-                그럴경우에는 이름 혹은 경로가 둘다 없을 수도 있다.
-        """
-        assert isinstance(ndataframe, nd.NDataFrame), f"ndataframe must be NDataFrame but {type(ndataframe)}"
-        self._ndf = ndataframe
-        return self
+                return self._df
+        return pd.DataFrame()
 
     def save(self):
         for cls in NDataSaverBase.__subclasses__():
-            if cls.is_match(self._ndf):
+            if cls.is_match(self):
                 cls(self).save()
                 logger.info(f"{self.name}'s ndata saved")
                 return
+        else:
+            raise NotImplementedError(f"save method must be implemented in DataFrameDataSaverBase, {type(self)}")
 
-
-class NDataIndex:
-    """NData의 index를 관리하는 클래스.
-
-    설명:
-    """
-
-    def __init__(self, index: pd.Index):
-        self._index = index
+    def set_dataframe(self, dataframe: pd.DataFrame):
+        assert isinstance(dataframe, pd.DataFrame), f"dataframe must be pd.DataFrame but {type(dataframe)}"
+        self._df = dataframe
+        return self

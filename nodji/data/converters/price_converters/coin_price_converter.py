@@ -5,7 +5,7 @@ from .asset_price_converter_base import AssetPriceConverterBase
 
 
 class CoinPriceConverter(AssetPriceConverterBase):
-    def api_to_ndataframe(self, response: requests.Response) -> 'nd.NDataFrame':
+    def api_to_dataframe(self, response: requests.Response) -> pd.DataFrame:
         df = pd.DataFrame(response.json())
         df = df[['candle_date_time_kst',
                  'opening_price',
@@ -25,6 +25,6 @@ class CoinPriceConverter(AssetPriceConverterBase):
         df['date'] = df['date'].dt.tz_localize(nd.TimeZone.SEOUL.value)
         df.set_index('date', inplace=True)
         df.sort_index(inplace=True)
-        return nd.NDataFrame(df)
+        return df
 
 

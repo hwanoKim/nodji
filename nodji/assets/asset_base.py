@@ -4,18 +4,26 @@ from typing import Sequence
 import nodji as nd
 from ..data.price_datas.asset_price_data_base import AssetPriceDataBase
 from ..data.asset_data.asset_data import AssetsData
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..core.ntime import NTime
 
 
 @dataclass
 class AssetBase:
 
-    @property
-    def price_data(self):
-        raise NotImplementedError("price_data property must be implemented in AssetBase")
+    def __post_init__(self):
+        self._set_price_data()
 
-    def update_price(self, start_time=None, end_time=None):
-        """가격 정보를 업데이트 한다."""
+    def update_price_data(self, start_time=None, end_time=None):
         self.price_data.update(start_time=start_time, end_time=end_time)
+
+    def load_price_data(self, start_time: 'NTime' = None, end_time: 'NTime' = None):
+        return self.price_data.load(start_time=start_time, end_time=end_time)
+
+    def _set_price_data(self):
+        self.price_data = AssetPriceDataBase('price')
 
 
 @dataclass
@@ -71,11 +79,11 @@ class AssetsBase(Sequence[AssetBase]):
     def update_price(self):
         """어셋의 가격정보를 업데이트 한다."""
         for asset in self:
-            asset.update_price()
+            asset.update_price_data()
 
     def _load_asset_items(self):
         """어셋의 리스트들을 디비에서 읽어온다"""
-        self._assets = self._items_conv.ndataframe_to_asset_items(self._data.load())
+        self._assets = self._items_conv.dataframe_to_asset_items(self._data.load())
 
 
 class TickerAssetsBase(AssetsBase):

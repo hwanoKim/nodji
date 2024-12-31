@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from typing import Union
 
 import pandas as pd
+from pandas import Timestamp
+
 import nodji as nd
 
 
@@ -31,12 +33,16 @@ class NTime:
     def __gt__(self, other):
         if isinstance(other, NTime):
             return self._time > other._time
+        elif isinstance(other, Timestamp):
+            return self._time > other
         else:
             raise NotImplementedError(other, type(other))
 
     def __ge__(self, other):
         if isinstance(other, NTime):
             return self._time >= other._time
+        elif isinstance(other, Timestamp):
+            return self._time >= other
         else:
             raise NotImplementedError(other, type(other))
 
@@ -128,6 +134,20 @@ class NTime:
     def to_string(self):
         return self._time.strftime("%Y-%m-%d %H:%M:%S")
 
+    def to_datetime(self):
+        return self._time
+
+    def to_pandas_timestamp(self) -> Timestamp:
+        """
+        현재 NTime 객체를 pandas.Timestamp로 변환합니다.
+
+        Returns:
+            pandas.Timestamp: 변환된 pandas.Timestamp 객체.
+        """
+        if self.is_none:
+            raise ValueError("Cannot convert None to pandas.Timestamp")
+        return pd.Timestamp(self._time)
+
     def _convert_time_value(self, time, time_zone):
         """
 
@@ -153,6 +173,8 @@ class NTime:
                     raise NotImplementedError(time, type(time))
         elif isinstance(time, datetime):
             pass
+        elif isinstance(time, NTime):
+            time = time._time
         else:
             raise NotImplementedError(time, type(time))
 

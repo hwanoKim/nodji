@@ -21,13 +21,12 @@ class Coin(TickerAssetBase):
     warning: bool
     caution: CoinMarketCaution = CoinMarketCaution()
 
-    @property
-    def price_data(self):
+    def _set_price_data(self):
         """코인의 가격은 분단위 ohlcv 가격이다.
 
         분당이 아닌 가격은 현재는 생각하지 않고 있다. 어차피
         나는 실시간 정보를 기반으로 거래는 하지 않는 것을 생각하고 있다.
         """
-        return CoinPriceData(self)
+        self.price_data = CoinPriceData(self)
 
 

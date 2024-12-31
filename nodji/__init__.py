@@ -28,12 +28,12 @@ def log(level: LogLevel, output_to_file: bool = False, file_path: str = None):
 log(LogLevel.WARNING)
 
 from .core.ntime import NTime
-from .core.file_utils import *
+from .core.os_utils import *
+from .core.dataframe import *
 from .assets import Assets
 from .core import constants as consts
 from .core.paths import Paths
-from .core.ndataframe import NDataFrame
 from . import external_apis
 from .data.ndata.ndata import NData
 from .utils.email import Email
-from .utils.lotto import email_lotto_numbers
+from .utils.lotto import email_lotto_numbers, Lotto

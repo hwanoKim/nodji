@@ -18,6 +18,8 @@ def email_lotto_numbers():
         result.append('번호는 : ' + ', '.join([str(i) for i in lotto.draw()]))
 
     email.send(msg='\n'.join(result))
+    for i in result:
+        print(i)
 
 
 class Consts:
@@ -33,7 +35,7 @@ class Lotto:
     """
 
     def __init__(self):
-        self.df = nd.DataFrameData('lotto').load()
+        self.df = nd.NData('lotto').load()
 
     def __repr__(self):
         return str(self.df)
@@ -163,10 +165,10 @@ class Lotto:
 
     def update(self):
         """로또 데이터를 업데이트 한다."""
-        lotto_df = nd.DataFrameData('lotto').load()
+        lotto_df = nd.NData('lotto').load()
         self.df = self._download_lotto_data_from_server(lotto_df)
-        data = nd.DataFrameData('lotto')
-        data(self.df)
+        data = nd.NData('lotto')
+        data.set_dataframe(self.df)
         data.save()
         return self.df
 

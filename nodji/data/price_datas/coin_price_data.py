@@ -8,8 +8,6 @@ if TYPE_CHECKING:
 
 
 class CoinPriceData(MinutePriceData, OHLCVData):
-    _asset: 'Coin'
 
-    @property
-    def update(self):
-        return CoinPriceUpdater(self)
+    def _set_updater(self):
+        self.update = CoinPriceUpdater(self)

@@ -32,6 +32,6 @@ class Coins(TickerAssetsBase):
                 항상 새롭게 전체 리스트를 서버에서 받아온다.
         """
         self._assets = self._items_conv.api_to_asset_items(self._items_coll.get_from_upbit())
-        ndf = self._items_conv.asset_items_to_ndataframe(self._assets)
-        self._data.set_ndataframe(ndf)
+        df = self._items_conv.asset_items_to_dataframe(self._assets)
+        self._data.set_dataframe(df)
         self._data.save()

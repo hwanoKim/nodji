@@ -1,5 +1,10 @@
-from nodji.data.price_datas.asset_price_data_base import AssetPriceDataBase
 import nodji as nd
+
+from typing import TYPE_CHECKING
+from loguru import logger
+
+if TYPE_CHECKING:
+    from nodji.data.price_datas.asset_price_data_base import AssetPriceDataBase
 
 
 class AssetPriceDataUpdaterBase:
@@ -25,48 +30,94 @@ class AssetPriceDataUpdaterBase:
         self._end_time = nd.NTime(end_time)
         self._validate_times()
         self._update()
-        # self._price_data.save()
+        self._price_data.save()
 
     @property
     def _conv(self):
         raise NotImplementedError("converter property must be implemented in PriceUpdaterBase")
 
-    def _update_data_from_time_range(self, start_time, end_time):
+    def _update_origin_dataframe_from_time_range(self, start_time, end_time):
         """collector를 이용하여 상황에 맞게 값을 가져온다."""
         raise NotImplementedError("get_data_from_time_range method must be implemented in PriceUpdaterBase")
 
     def _update(self):
-        if not self._price_data.exists:
-            self._price_data._set_initial_data_columns()
+        """어셋의 가격 업데이트를 진행한다.
 
-        self._old_ndf = self._price_data.copy_ndataframe()
-        self._add_price_after_old_ndataframe()
-        # self._add_price_before_old_ndataframe()
-        # self._add_price_missing_time(old_start_time, old_end_time)
+        설명:
+            어셋의 가격를 처음 받을 때와
+            기존에 데이터가 존재 할 때를 나누어 진행한다.
+        """
+        if self._price_data.exists:
+            self._price_data.load(self._start_time, self._end_time)
+        else:
+            self._price_data.set_initial_data_columns()
+
+        self._orig_df = self._price_data._df.copy()
+
+        if self._orig_df.empty:
+            self._update_price_if_empty()
+        else:
+            self._update_price_if_not_empty()
+        self._price_data.set_dataframe(self._orig_df)
+
+    def _update_price_if_empty(self):
+        start_time, end_time = self._get_time_range_of_update_price_if_empty()
+        self._update_origin_dataframe_from_time_range(start_time, end_time)
+
+    def _get_time_range_of_update_price_if_empty(self):
+        if self._end_time:
+            end_time = self._end_time
+        else:
+            end_time = nd.NTime.get_current_time()
+        return self._start_time, end_time
+
+    def _update_price_if_not_empty(self):
+        self._add_price_missing_time()
+        self._add_price_after_original_dataframe()
+        self._add_price_before_original_dataframe()
 
     def _validate_times(self):
         if not self._start_time.is_none and not self._end_time.is_none:
             assert self._start_time < self._end_time, "start_time must be less than end_time"
 
-    def _add_price_after_old_ndataframe(self):
+    def _add_price_after_original_dataframe(self):
         """기존 데이터의 마지막 시간부터 가장 최신의 시간까지 데이터를 추가한다."""
-        if self._needs_update_after_old_ndataframe():
+        if self._needs_update_after_original_dataframe():
             start_time, end_time = self._get_time_range_of_add_after_data()
-            self._update_data_from_time_range(start_time, end_time)
+            self._update_origin_dataframe_from_time_range(start_time, end_time)
 
-    def _needs_update_after_old_ndataframe(self):
-        """예전 데이터에서 마지막 날짜 이후로 추가해야 하는지 확인한다."""
-        if self._end_time:
-            if self._old_ndf.is_empty:
-                if self._end_time < self._old_ndf.end_time:
-                    return False
+    def _needs_update_before_original_ndataframe(self):
+        """예전 데이터에서 첫 번째 날짜 이전으로 추가해야 하는지 확인한다."""
+        if self._start_time:
+            if self._start_time > self._orig_df.index[0]:
+                return False
         return True
 
-    def _get_time_range_of_add_after_data(self):
-        if self._old_ndf:
-            start_time = self._old_ndf.end_time
+    def _needs_update_after_original_dataframe(self):
+        """예전 데이터에서 마지막 날짜 이후로 추가해야 하는지 확인한다."""
+        if self._end_time:
+            if self._end_time < self._orig_df.index[-1]:
+                return False
+        return True
+
+    def _get_time_range_of_add_before_data(self):
+        end_time = nd.NTime(self._orig_df.index[0])
+        if self._start_time:
+            if end_time < self._start_time:
+                start_time = end_time
+            else:
+                start_time = self._start_time
         else:
             start_time = nd.NTime(None)
+
+        if self._end_time:
+            if end_time > self._end_time:
+                end_time = self._end_time
+
+        return start_time, end_time
+
+    def _get_time_range_of_add_after_data(self):
+        start_time = nd.NTime(self._orig_df.index[-1])
         end_time = nd.NTime.get_current_time()
 
         if self._start_time:
@@ -82,12 +133,13 @@ class AssetPriceDataUpdaterBase:
 
         return start_time, end_time
 
-    def _add_price_missing_time(self, old_start_time, old_end_time):
-        data = self._data[old_start_time:old_end_time]
-        for start_time, end_time in data.missing_times:
-            self._data += self._coll.get_from_upbit(start_time, end_time)
+    def _add_price_missing_time(self):
+        missing_time_ranges = nd.find_missing_time_ranges_of_dataframe(self._orig_df)
+        for start_time, end_time in missing_time_ranges:
+            self._update_origin_dataframe_from_time_range(start_time, end_time)
 
-    def _add_price_before_old_ndataframe(self, old_start_time):
-        start_time = self._get_time_range_of_add_after_data(old_end_time)
-        end_time = self._get_end_time_of_add_after_data(old_end_time)
-        self._data += self._coll.get_from_upbit(start_time, end_time)
+    def _add_price_before_original_dataframe(self):
+        if self._needs_update_before_original_ndataframe():
+            start_time, end_time = self._get_time_range_of_add_before_data()
+            print(start_time, end_time)
+            self._update_origin_dataframe_from_time_range(start_time, end_time)

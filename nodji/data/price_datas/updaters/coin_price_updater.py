@@ -1,4 +1,7 @@
 from typing import TYPE_CHECKING
+
+import pandas as pd
+
 import nodji as nd
 from .asset_price_updater_base import AssetPriceDataUpdaterBase
 from ...converters.price_converters.coin_price_converter import CoinPriceConverter
@@ -33,19 +36,27 @@ class CoinPriceUpdater(AssetPriceDataUpdaterBase):
     def _conv(self):
         return CoinPriceConverter(self._price_data)
 
-    def _update_data_from_time_range(self, start_time, end_time):
+    def _update_origin_dataframe_from_time_range(self, start_time: nd.NTime, end_time: nd.NTime):
         while True:
             new_data = self._ub.get_minute_candles(self._price_data._asset.ticker, end_time)
-            new_ndf: nd.NDataFrame = self._conv.api_to_ndataframe(new_data)
+            new_df = self._conv.api_to_dataframe(new_data)
             logger.info(f"{end_time} - {self._price_data._asset.ticker}")
 
-            if new_ndf.is_empty:
+            if new_df.empty:
                 break
 
-            self._old_ndf += new_ndf
+            if self._orig_df.empty:
+                self._orig_df = new_df
+            else:
+                stop = False
 
-            if start_time and start_time >= self._old_ndf.start_time:
-                self._old_ndf.start_time = start_time
-                break
+                if start_time and start_time >= new_df.index[0]:
+                    new_df = new_df[new_df.index >= start_time.to_pandas_timestamp()]
+                    stop = True
+                self._orig_df = pd.concat([new_df, self._orig_df]).sort_index()
+                self._orig_df = self._orig_df[~self._orig_df.index.duplicated(keep="first")]
 
-            end_time = new_ndf.start_time
+                if stop:
+                    break
+
+            end_time = nd.NTime(new_df.index[0])
