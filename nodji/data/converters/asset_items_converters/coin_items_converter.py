@@ -42,6 +42,7 @@ class CoinItemsConverter(AssetItemsConverterBase):
         return pd.DataFrame([asdict(asset) for asset in assets])
 
     def api_to_asset_items(self, coins: list[dict]) -> list['Coin']:
+        """현재는 KRW 원화 코인들만 가져온다"""
         return [Coin(ticker=coin['market'],
                      kor_name=coin['korean_name'],
                      eng_name=coin['english_name'],
@@ -51,4 +52,5 @@ class CoinItemsConverter(AssetItemsConverterBase):
                                                coin['market_event']['caution']['DEPOSIT_AMOUNT_SOARING'],
                                                coin['market_event']['caution']['GLOBAL_PRICE_DIFFERENCES'],
                                                coin['market_event']['caution']['CONCENTRATION_OF_SMALL_ACCOUNTS']))
-                for coin in coins]
+                for coin in coins
+                if coin['market'].startswith('KRW-')]

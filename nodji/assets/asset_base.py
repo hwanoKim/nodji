@@ -76,9 +76,9 @@ class AssetsBase(Sequence[AssetBase]):
         """어셋들의 종복 정보들을 업데이트 해준다."""
         raise NotImplementedError(f"update_item method must be implemented in {self.__class__.__name__}")
 
-    def update_price(self):
+    def update_price_data(self):
         """어셋의 가격정보를 업데이트 한다."""
-        for asset in self:
+        for asset in self[2:]:
             asset.update_price_data()
 
     def _load_asset_items(self):

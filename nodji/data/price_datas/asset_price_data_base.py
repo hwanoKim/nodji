@@ -34,7 +34,7 @@ class TickerPriceDataBase(AssetPriceDataBase):
 class OHLCVData(TickerPriceDataBase):
     """OHLCV 데이터의 base class"""
 
-    def set_initial_data_columns(self):
+    def set_initial_data_columns(self) -> pd.DataFrame:
         """빈 ohlcv dataframe 데이터를 만든다.
 
         이미 데이터가 있으면 안된다.
@@ -48,9 +48,9 @@ class OHLCVData(TickerPriceDataBase):
                 Volume: 거래량
                 TradePrice: 거래금액
         """
-        assert not self.exists, f"{self.name} data already exists"
         assert self.is_empty, "data must be empty"
         self._df = pd.DataFrame(columns=['Open', 'High', 'Low', 'Close', 'Volume', 'TradePrice'])
+        return self._df
 
 
 class MinutePriceData(TickerPriceDataBase):

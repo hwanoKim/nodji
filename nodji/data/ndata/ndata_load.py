@@ -87,6 +87,7 @@ class NTimeSeriesDataLoader(NDataLoaderBase):
         return nd.get_folders_from_directory(nd.Paths.DATABASE)
 
     def load(self, start_time: 'NTime', end_time: 'NTime') -> pd.DataFrame:
+        """만약 해당하는 데이터가 없다면 빈 데이터프레임을 반환한다."""
         files = self._get_all_dataframe_files_from_folder()
         if not files:
             return pd.DataFrame()
@@ -95,8 +96,12 @@ class NTimeSeriesDataLoader(NDataLoaderBase):
 
         self._df = pd.DataFrame()
 
-        for date in rrule(MONTHLY, dtstart=start_time.replace(day=1), until=end_time.replace(day=30)):
+        for date in rrule(MONTHLY,
+                          dtstart=start_time.replace(day=1),
+                          until=end_time.replace(day=calendar.monthrange(end_time.year, end_time.month)[1])):
             file_path = self._get_monthly_file_path(date.year, date.month)
+            if not nd.exists_path(file_path):
+                continue
             if file_path in files:
                 if self._df.empty:
                     self._df = nd.load_dataframe(file_path)
@@ -104,9 +109,10 @@ class NTimeSeriesDataLoader(NDataLoaderBase):
                     new_df = nd.load_dataframe(file_path)
                     self._df = pd.concat([self._df, new_df])
 
-        self._df.sort_values(by='date', inplace=True)
-        self._df = self._df[start_time <= self._df.index]
-        self._df = self._df[self._df.index < end_time]
+        if not self._df.empty:
+            self._df.sort_values(by='date', inplace=True)
+            self._df = self._df[start_time <= self._df.index]
+            self._df = self._df[self._df.index < end_time]
         return self._df
 
     def _get_start_time_and_end_time(self, start_time: 'NTime', end_time: 'NTime', files):

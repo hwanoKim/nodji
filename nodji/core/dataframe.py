@@ -1,5 +1,6 @@
 from pathlib import Path as _Path
 from typing import Union as _Union
+from .ntime import NTime as _NTime
 
 import pandas as _pd
 
@@ -41,7 +42,7 @@ def find_duplicate_time_rows(dataframe: _pd.DataFrame) -> _pd.DataFrame:
     return dataframe[duplicated_index]
 
 
-def find_missing_time_ranges_of_dataframe(dataframe: _pd.DataFrame) -> list[tuple[_pd.Timestamp, _pd.Timestamp]]:
+def find_missing_time_ranges_of_dataframe(dataframe: _pd.DataFrame) -> list[tuple[_NTime, _NTime]]:
     """
     DataFrame의 DatetimeIndex에서 누락된 시간 구간을 반환합니다.
 
@@ -64,6 +65,6 @@ def find_missing_time_ranges_of_dataframe(dataframe: _pd.DataFrame) -> list[tupl
         if diff > 1:
             start = index[i - 1] + _pd.Timedelta(minutes=1)
             end = index[i] - _pd.Timedelta(minutes=1)
-            missing_ranges.append((start, end))
+            missing_ranges.append((_NTime(start), _NTime(end)))
 
     return missing_ranges

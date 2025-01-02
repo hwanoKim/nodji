@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Union
 
 import pandas as pd
+from dateutil.relativedelta import relativedelta
 from pandas import Timestamp
 
 import nodji as nd
@@ -34,6 +35,8 @@ class NTime:
         if isinstance(other, NTime):
             return self._time > other._time
         elif isinstance(other, Timestamp):
+            return self._time > NTime(other)
+        elif isinstance(other, datetime):
             return self._time > other
         else:
             raise NotImplementedError(other, type(other))
@@ -49,6 +52,10 @@ class NTime:
     def __lt__(self, other):
         if isinstance(other, NTime):
             return self._time < other._time
+        elif isinstance(other, Timestamp):
+            return self._time < NTime(other)
+        elif isinstance(other, datetime):
+            return self._time < other
         else:
             raise NotImplementedError(other, type(other))
 
@@ -93,39 +100,53 @@ class NTime:
             self._time += timedelta(days=days_to_add)
 
     @property
-    def mon(self):
+    def mon(self) -> int:
         return self._time.month
 
     @mon.setter
     def mon(self, value):
-        while value > 12:
-            value -= 12
-            self._time = self._time.replace(year=self._time.year + 1)
-        self._time = self._time.replace(month=value)
+        month_difference = value - self._time.month
+
+        # relativedelta를 사용해 월 차이를 계산
+        self._time += relativedelta(months=month_difference)
+
+        # 월 변경 후 현재 날짜가 유효하지 않다면, 해당 월의 마지막 날로 설정
+        while True:
+            try:
+                self._time = self._time.replace(day=self._time.day)
+                break
+            except ValueError:
+                self._time = self._time.replace(day=self._time.day - 1)
 
     @property
-    def sec(self):
+    def day(self) -> int:
+        return self._time.day
+
+    @day.setter
+    def day(self, value):
+        day_difference = value - self._time.day
+        self._time += timedelta(days=day_difference)
+
+    @property
+    def sec(self) -> int:
         return self._time.second
 
     @sec.setter
     def sec(self, value):
-        minutes_to_add = value // 60
-        value = value % 60
-        self._time = self._time.replace(second=value)
-        if minutes_to_add > 0:
-            self._time += timedelta(minutes=minutes_to_add)
+        seconds_difference = value - self._time.second
+        self._time += timedelta(seconds=seconds_difference)
 
     @property
-    def min(self):
+    def min(self) -> int:
         return self._time.minute
 
     @min.setter
     def min(self, value):
-        hours_to_add = value // 60
-        value = value % 60
-        self._time = self._time.replace(minute=value)
-        if hours_to_add > 0:
-            self._time += timedelta(hours=hours_to_add)
+        minutes_difference = value - self._time.minute
+        self._time += timedelta(minutes=minutes_difference)
+
+    def copy(self):
+        return NTime(self._time, self.time_zone)
 
     def to_utc(self):
         self.time_zone = nd.TimeZone.UTC
@@ -148,6 +169,11 @@ class NTime:
             raise ValueError("Cannot convert None to pandas.Timestamp")
         return pd.Timestamp(self._time)
 
+    def get_last_day_of_month(self) -> int:
+        next_month = self._time.replace(day=28) + timedelta(days=4)
+        last_day = next_month.replace(day=1) - timedelta(days=1)
+        return last_day.day
+
     def _convert_time_value(self, time, time_zone):
         """
 
@@ -168,6 +194,12 @@ class NTime:
                 raise NotImplementedError(time, type(time))
             else:
                 if len(time) == 8:
+                    time = datetime.strptime(time, '%Y%m%d')
+                elif len(time) == 6:
+                    if int(time[:2]) < 50:
+                        time = '20' + time
+                    else:
+                        time = '19' + time
                     time = datetime.strptime(time, '%Y%m%d')
                 else:
                     raise NotImplementedError(time, type(time))

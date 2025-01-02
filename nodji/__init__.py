@@ -1,7 +1,7 @@
 import sys
 
 from loguru import logger
-from .core.types import (LogLevel, DataStorageFrequency, TimeZone, NDataFrameIndex)
+from .core.types import LogLevel, TimeZone
 
 
 def _custom_formatter(record):
