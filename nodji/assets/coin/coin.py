@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 from ..asset_base import TickerAssetBase
 from ...data.price_datas.coin_price_data import CoinPriceData
+from ...visualizer.visualizer import CoinVisualizer
 
 
 @dataclass
@@ -21,6 +22,10 @@ class Coin(TickerAssetBase):
     warning: bool
     caution: CoinMarketCaution = CoinMarketCaution()
 
+    def show(self, start_time: str = None, end_time: str = None):
+        self.price_data.load(start_time, end_time)
+        CoinVisualizer(self).show()
+
     def _set_price_data(self):
         """코인의 가격은 분단위 ohlcv 가격이다.
 
@@ -28,5 +33,3 @@ class Coin(TickerAssetBase):
         나는 실시간 정보를 기반으로 거래는 하지 않는 것을 생각하고 있다.
         """
         self.price_data = CoinPriceData(self)
-
-

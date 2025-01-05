@@ -35,5 +35,6 @@ from .core import constants as consts
 from .core.paths import Paths
 from . import external_apis
 from .data.ndata.ndata import NData
+from .data.analyzer.price_data_analyzer import CoinPriceDataAnalyzer
 from .utils.email import Email
 from .utils.lotto import email_lotto_numbers, Lotto

@@ -22,6 +22,10 @@ class AssetBase:
     def load_price_data(self, start_time: 'NTime' = None, end_time: 'NTime' = None):
         return self.price_data.load(start_time=start_time, end_time=end_time)
 
+    def show(self):
+        """어셋들의 데이터를 그래프로 보여준다."""
+        raise NotImplementedError(f"show method must be implemented in {self.__class__.__name__}")
+
     def _set_price_data(self):
         self.price_data = AssetPriceDataBase('price')
 
