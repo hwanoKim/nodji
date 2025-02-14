@@ -2,6 +2,7 @@ from ...assets.asset_base import TickerAssetsBase
 from ...assets.coin.coin import Coin
 from ...data.collectors.items_collectors.coin_items_collector import CoinItemsCollector
 from ...data.converters.asset_items_converters.coin_items_converter import CoinItemsConverter
+from loguru import logger
 
 
 class Coins(TickerAssetsBase):
@@ -35,3 +36,4 @@ class Coins(TickerAssetsBase):
         df = self._items_conv.asset_items_to_dataframe(self._assets)
         self._data.set_dataframe(df)
         self._data.save()
+        logger.info(f"Coin items updated")

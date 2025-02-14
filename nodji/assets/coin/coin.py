@@ -1,8 +1,8 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from ..asset_base import TickerAssetBase
 from ...data.price_datas.coin_price_data import CoinPriceData
-from ...visualizer.visualizer import CoinVisualizer
+from ...visualizer.asset_visualizer import CoinVisualizer
 
 
 @dataclass
@@ -20,11 +20,10 @@ class Coin(TickerAssetBase):
     kor_name: str
     eng_name: str
     warning: bool
-    caution: CoinMarketCaution = CoinMarketCaution()
+    caution: CoinMarketCaution = field(default_factory=CoinMarketCaution)
 
-    def show(self, start_time: str = None, end_time: str = None):
-        self.price_data.load(start_time, end_time)
-        CoinVisualizer(self).show()
+    def show(self, additional_columns=None):
+        CoinVisualizer(self).show(additional_columns)
 
     def _set_price_data(self):
         """코인의 가격은 분단위 ohlcv 가격이다.

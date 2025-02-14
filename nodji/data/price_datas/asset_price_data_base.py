@@ -3,13 +3,13 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from .updaters.asset_price_updater_base import AssetPriceDataUpdaterBase
-from ..ndata.ndata import NData
+from ..ndata.ndata import NTimeSeriesData
 
 if TYPE_CHECKING:
     from ...assets.asset_base import TickerAssetBase
 
 
-class AssetPriceDataBase(NData):
+class AssetPriceDataBase(NTimeSeriesData):
     update: 'AssetPriceDataUpdaterBase'
 
     def __init__(self, name: str):

@@ -34,7 +34,10 @@ from .assets import Assets
 from .core import constants as consts
 from .core.paths import Paths
 from . import external_apis
-from .data.ndata.ndata import NData
+from .data.ndata.ndata import NData, NTimeSeriesData
 from .data.analyzer.price_data_analyzer import CoinPriceDataAnalyzer
+from .backtester.backtester import CoinBacktester, BacktestConfig
+from .backtester.evaluators import evaluators
+from .backtester.indicators import indicators
 from .utils.email import Email
 from .utils.lotto import email_lotto_numbers, Lotto

@@ -9,7 +9,7 @@ from email.mime.multipart import MIMEMultipart
 
 class Email:
 
-    def __init__(self, email='sin3514@naver.com', password='YVK4VZYULDY1', server='naver'):
+    def __init__(self, email='sin3514@naver.com', password='hwan0320!ht', server='naver'):
         self.email = email
         self.password = password
         self.server = server

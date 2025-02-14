@@ -18,17 +18,12 @@ class Assets:
             if isinstance(assets, AssetsBase):
                 yield assets
 
-    def update(self):
-        """모든 asset 관련된 정보들을 업데이트 한다."""
-        self.update_item()
-        self.update_price()
-
-    def update_item(self):
+    def update_items(self):
         """종류별로 각 종목들을 업데이트 한다."""
         for assets in self._all_asset_sequences:
             assets.update_items()
 
-    def update_price(self):
+    def update_price_datas(self):
         """모든 종목들의 가격을 업데이트 한다."""
         for assets in self._all_asset_sequences:
             assets.update_price()

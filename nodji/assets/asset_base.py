@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Sequence
 
+import pandas as pd
+
 import nodji as nd
 from ..data.price_datas.asset_price_data_base import AssetPriceDataBase
 from ..data.asset_data.asset_data import AssetsData
@@ -16,14 +18,29 @@ class AssetBase:
     def __post_init__(self):
         self._set_price_data()
 
-    def update_price_data(self, start_time=None, end_time=None):
-        self.price_data.update(start_time=start_time, end_time=end_time)
+    @property
+    def df(self) -> 'pd.DataFrame':
+        return self.price_data._df
+
+    def update_price_data(self, start_time=None, end_time=None, backfill: bool = False):
+        """
+
+        설명:
+            backfill:
+                AssetPriceDataUpdaterBase 의 docstring을 참고
+        """
+        self.price_data.update(start_time=start_time, end_time=end_time, backfill=backfill)
 
     def load_price_data(self, start_time: 'NTime' = None, end_time: 'NTime' = None):
         return self.price_data.load(start_time=start_time, end_time=end_time)
 
-    def show(self):
-        """어셋들의 데이터를 그래프로 보여준다."""
+    def show(self, additional_columns: list[str] = None):
+        """어셋들의 데이터를 그래프로 보여준다.
+
+        설명:
+            additional_columns:
+                그래프에 추가적으로 표시할 컬럼들을 리스트로 넣어준다.
+        """
         raise NotImplementedError(f"show method must be implemented in {self.__class__.__name__}")
 
     def _set_price_data(self):
