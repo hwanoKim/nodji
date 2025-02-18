@@ -2,8 +2,8 @@ from dataclasses import dataclass
 
 from ..assets.asset_base import AssetBase
 from typing import TYPE_CHECKING
-import nodji as nd
 from .evaluators.evaluators import _EvaluatorBase
+import nodji as nd
 
 if TYPE_CHECKING:
     from ..assets.coin.coin import Coin
@@ -42,8 +42,16 @@ class BacktestConfig:
     sell_threshold: float = 0.2
 
 
-class BacktestResult:
-    pass
+class BacktestReport:
+    def __init__(self, config: BacktestConfig, trades: 'Trades'):
+        self.config = config
+        self.trades = trades
+
+    def summary(self):
+        pass
+
+    def plot(self):
+        pass
 
 
 class BacktesterBase:
@@ -51,23 +59,29 @@ class BacktesterBase:
         self._asset = asset
 
 
+class Trades:
+    pass
+
+
 class CoinBacktester(BacktesterBase):
     _asset: 'Coin'
 
-    def backtest(self, evaluators: list[_EvaluatorBase], config: BacktestConfig = None):
+    def backtest(self, evaluators: list[_EvaluatorBase], config: BacktestConfig = None) -> BacktestReport:
         """evaluator들의 전략으로 수익을 계산한다"""
         if config is None:
             config = BacktestConfig()
 
-        self._asset.price_data.load(config.start_time, config.end_time)
-        result = self._evaluate(evaluators, config)
-        BacktestReport(result).print_report()
+        self._asset.price_data.load(nd.NTime(config.start_time), nd.NTime(config.end_time))
+        self._trades = self._generate_trades(evaluators, config)
+        return BacktestReport(config, self._trades)
+        # self._pf_flow = PortfolioFlow(self._asset,
+        #                               start_time=nd.NTime(config.start_time),
+        #                               end_time=nd.NTime(config.end_time),
+        #                               trades=self._trades)
 
-
-    def _eavluate(self, evaluators: list[_EvaluatorBase], config: BacktestConfig) -> BacktestResult:
+    def _generate_trades(self, evaluators: list[_EvaluatorBase], config: BacktestConfig) -> Trades:
         """evaluator들로 벡테스트 결과를 계산하여 반환한다"""
-        for evaluator in evaluators:
-            evaluator.evaluate(self._asset, config)
+        return Trades()
 
     # def calculate_price_change(self, config: BacktestConfig = None):
     #     """첫 시간의 금액이 마지막 시간에 얼마가 되는지 단순하게 계산한다"""

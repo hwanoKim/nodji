@@ -33,7 +33,7 @@ from .core.dataframe import *
 from .assets import Assets
 from .core import constants as consts
 from .core.paths import Paths
-from . import external_apis
+from .trading.upbit import Upbit
 from .data.ndata.ndata import NData, NTimeSeriesData
 from .data.analyzer.price_data_analyzer import CoinPriceDataAnalyzer
 from .backtester.backtester import CoinBacktester, BacktestConfig

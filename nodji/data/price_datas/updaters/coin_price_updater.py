@@ -17,7 +17,7 @@ class CoinPriceUpdater(AssetPriceDataUpdaterBase):
 
     def __init__(self, price_data: 'CoinPriceData'):
         super().__init__(price_data)
-        self._ub = nd.external_apis.Upbit()
+        self._ub = nd.Upbit()
 
     @property
     def _conv(self):

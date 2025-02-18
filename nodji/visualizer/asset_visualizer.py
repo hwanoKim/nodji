@@ -2,8 +2,10 @@ from cycler import cycler
 from matplotlib import pyplot as plt
 
 from nodji.assets.asset_base import AssetBase
-from nodji.assets.coin.coin import Coin
 from nodji.visualizer.visualizer_base import VisualizerBase
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from ..assets.coin.coin import Coin
 
 
 class AssetVisualizer(VisualizerBase):
